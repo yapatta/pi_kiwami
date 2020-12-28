@@ -2,7 +2,7 @@
 
 なるべく多くの桁で円周率を計算したい.
 
-## bsm.cpp
+## bsm\_divide.cpp
 
 ### 説明
 
@@ -22,5 +22,11 @@
 ### コンパイル
 
 ```
-g++ -std=c++17 bsm.cpp -lgmp
+g++ --std=c++17 bsm_divide.cpp -O3 -lgmp
+```
+
+もしくは
+
+```
+make bsm_divide
 ```
