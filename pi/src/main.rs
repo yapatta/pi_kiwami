@@ -1,7 +1,7 @@
 use rug::{ops::Pow, Float, Integer};
 
 // 定数たち
-const N: i64 = 10000000;
+const N: i64 = 100000000;
 const SN: i64 = N / 14; // n: small N
 const A: i64 = 13591409;
 const B: i64 = 545140134;
@@ -44,7 +44,12 @@ fn main() {
     // x, y, zの値は間違っていないらしい
     let (x, y, _z) = calc(0, SN);
 
-    // ただansの値がc++版と違う
-    let ans = Float::with_val(N as u32 + 20, CT).sqrt() * x / 12 / y;
-    println!("{num:.prec$}", prec = N as usize, num = ans);
+    // with_valのprocはあくまでも有効桁のビット長(N / log_10^2), 10進数の桁数とは違う
+    // 1e8 / log10 ^2の演算結果を四捨五入した値
+    let prec: u32 = 332192810;
+
+    // precは10進数1e8桁の場合u32の制限に引っかからない(u32のMAXが4294967295)
+    let ans = Float::with_val(prec, CT).sqrt() * x / 12 / y;
+    println!("{}", ans);
+    // println!("{num:.prec$}", prec = N as usize - 1, num = ans);
 }
