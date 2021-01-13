@@ -8,4 +8,13 @@ edition = "2018"
 
 [dependencies]
 rug = "1.11.0"
+thread = "0.1.0"
 
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "thread"
+path = "src/thread.rs"
