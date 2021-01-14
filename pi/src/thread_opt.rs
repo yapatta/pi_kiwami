@@ -44,22 +44,35 @@ fn calc(left: i64, right: i64) -> (Integer, Integer, Integer) {
     (lx * &rx, &rx * ly + ry * &lz, &lz * rz)
 }
 
+fn calc_thread_vec(vec: &mut Vec<(Integer, Integer, Integer)>) -> (Integer, Integer, Integer) {
+    if vec.len() == 1 {
+        return vec.pop().unwrap();
+    }
+    let mid = vec.len() >> 1;
+    let mut rest_vec = vec.split_off(mid);
+    let (lx, ly, lz) = calc_thread_vec(vec);
+    let (rx, ry, rz) = calc_thread_vec(&mut rest_vec);
+
+    (lx * &rx, &rx * ly + ry * &lz, &lz * rz)
+}
+
 fn main() {
     let mut handles = Vec::new();
 
     let len = (SN + NTHREADS as i64 - 1) / NTHREADS as i64;
+    handles.push(thread::spawn(move || calc(0, SN % len)));
     let mut c = SN % len;
     for _x in 1..NTHREADS {
         handles.push(thread::spawn(move || calc(c, c + len)));
         c += len;
     }
 
-    let (fx, fy, fz) = calc(0, SN % len);
+    let mut thread_vec: Vec<(Integer, Integer, Integer)> = handles
+        .into_iter()
+        .map(|handle| handle.join().unwrap())
+        .collect();
 
-    let (x, y, _z) = handles.into_iter().fold((fx, fy, fz), |(x, y, z), handle| {
-        let (tx, ty, tz) = handle.join().unwrap();
-        (x * &tx, &tx * y + ty * &z, &z * tz)
-    });
+    let (x, y, _z) = calc_thread_vec(&mut thread_vec);
 
     // with_valのprocはあくまでも有効桁のビット長(N / log_10^2), 10進数の桁数とは違う
     // 1e8 / log10 ^2の演算結果を四捨五入した値
