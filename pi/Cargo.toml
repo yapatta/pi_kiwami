@@ -14,11 +14,19 @@ thread = "0.1.0"
 [[bin]]
 name = "main"
 path = "src/main.rs"
+opt-level = 3
 
 [[bin]]
 name = "thread"
 path = "src/thread.rs"
+opt-level = 3
 
 [[bin]]
 name = "thread_opt"
 path = "src/thread_opt.rs"
+opt-level = 3
+
+[[bin]]
+name = "ramanujan"
+path = "src/ramanujan.rs"
+opt-level = 3
