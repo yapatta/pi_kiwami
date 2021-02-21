@@ -36,3 +36,8 @@ opt-level = 3
 name = "fft"
 path = "src/fft.rs"
 opt-level = 3
+
+[[bin]]
+name = "bigint"
+path = "src/bigint.rs"
+opt-level = 3
