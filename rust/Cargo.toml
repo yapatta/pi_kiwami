@@ -1,0 +1,38 @@
+[package]
+name = "pi"
+version = "0.1.0"
+authors = ["yuziroppe <syani4732@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num = "0.3.1"
+rug = "1.11.0"
+thread = "0.1.0"
+
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+opt-level = 3
+
+[[bin]]
+name = "thread"
+path = "src/thread.rs"
+opt-level = 3
+
+[[bin]]
+name = "thread_opt"
+path = "src/thread_opt.rs"
+opt-level = 3
+
+[[bin]]
+name = "ramanujan"
+path = "src/ramanujan.rs"
+opt-level = 3
+
+[[bin]]
+name = "fft"
+path = "src/fft.rs"
+opt-level = 3
