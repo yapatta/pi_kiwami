@@ -30,7 +30,7 @@
         ├── main.rs
         ├── ramanujan.rs
         ├── thread.rs
-        └── thread_opt.rs
+        └── thread-opt.rs
 ```
 
 ### 進捗
@@ -75,5 +75,5 @@ make bsm_divide
 #### Rust
 
 ```
-cargo build --bin (main|thread(_opt)?|ramanujan|fft) --release
+cargo build --bin (main|thread(-opt)?|ramanujan|fft) --release
 ```
