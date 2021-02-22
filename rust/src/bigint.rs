@@ -2,6 +2,7 @@ const BASE_E: usize = 13;
 const BASE: i64 = (1 as i64) << BASE_E;
 const BASE_MASK: i64 = BASE - 1;
 
+// TODO: BigUIntを実装する -> BigUIntを元にBigIntを実装
 #[derive(Debug)]
 pub struct BigInt {
     pub negative: bool,
@@ -23,7 +24,7 @@ use std::ops::Add;
 impl Add for BigInt {
     type Output = BigInt;
     fn add(self, rhs: BigInt) -> Self::Output {
-        if self.negative ^ rhs.negative {
+        if !(self.negative ^ rhs.negative) {
             // ともに符号が同じ場合(大小関係はどうでも良い)
             let limbs_len = if self.limbs.len() >= rhs.limbs.len() {
                 self.limbs.len()
@@ -53,8 +54,12 @@ impl Add for BigInt {
             };
         } else {
             // どちらかの符号が違う場合
-            // TODO: ここの実装はまずは大小関係が先っぽい(大小関係が重要)
-            let limbs_len = if self.limbs.len() > rhs.limbs.len() {
+            if !self.negative && rhs.negative {
+                // selfは正, rhsは負
+            } else {
+                // selfは負, rhsは正
+            }
+            let limbs_len = if self > rhs {
                 self.limbs.len()
             } else {
                 rhs.limbs.len()
@@ -63,6 +68,7 @@ impl Add for BigInt {
             for i in 0..self.limbs.len() {
                 limbs[i] = self.limbs[i];
             }
+
             let mut carry: i64 = 0;
             for i in 0..rhs.limbs.len() {
                 limbs[i] -= rhs.limbs[i] - carry;
@@ -120,12 +126,7 @@ impl Eq for BigInt {}
 
 impl PartialEq for BigInt {
     fn eq(&self, other: &Self) -> bool {
-        let result = self.cmp(other);
-        if result == Ordering::Equal {
-            return true;
-        } else {
-            return false;
-        }
+        self.cmp(other) == Ordering::Equal
     }
 }
 

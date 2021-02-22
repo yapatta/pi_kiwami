@@ -41,3 +41,8 @@ opt-level = 3
 name = "bigint"
 path = "src/bigint.rs"
 opt-level = 3
+
+[[bin]]
+name = "biguint"
+path = "src/biguint.rs"
+opt-level = 3
