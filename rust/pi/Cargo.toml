@@ -11,10 +11,15 @@ num = "0.3.1"
 rug = "1.11.0"
 thread = "0.1.0"
 
-
 [[bin]]
 name = "main"
 path = "src/main.rs"
+opt-level = 3
+
+
+[[bin]]
+name = "bsm"
+path = "src/bsm.rs"
 opt-level = 3
 
 [[bin]]
@@ -33,16 +38,6 @@ path = "src/ramanujan.rs"
 opt-level = 3
 
 [[bin]]
-name = "fft"
-path = "src/fft.rs"
-opt-level = 3
-
-[[bin]]
 name = "bigint"
 path = "src/bigint.rs"
-opt-level = 3
-
-[[bin]]
-name = "biguint"
-path = "src/biguint.rs"
 opt-level = 3

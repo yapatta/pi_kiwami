@@ -1,3 +1,6 @@
+use super::fft::convolve;
+use std::cmp::max;
+
 const BASE_E: usize = 13;
 const BASE: i64 = (1 as i64) << BASE_E;
 const BASE_MASK: i64 = BASE - 1;
@@ -11,15 +14,16 @@ use std::ops::Add;
 impl Add for BigUInt {
     type Output = BigUInt;
     fn add(self, rhs: BigUInt) -> Self::Output {
-        let limbs_len = if self.limbs.len() >= rhs.limbs.len() {
-            self.limbs.len()
+        let add_len = if self.limbs.len() >= rhs.limbs.len() {
+            0
         } else {
-            rhs.limbs.len()
+            rhs.limbs.len() - rhs.limbs.len()
         };
-        let mut limbs = vec![0 as i64; limbs_len];
-        for i in 0..self.limbs.len() {
-            limbs[i] = self.limbs[i];
-        }
+
+        let mut limbs: Vec<i64> = vec![];
+        limbs.copy_from_slice(&self.limbs[..]);
+        limbs.resize_with(add_len, Default::default);
+
         let mut carry: i64 = 0;
         for i in 0..rhs.limbs.len() {
             limbs[i] += rhs.limbs[i] + carry;
@@ -65,16 +69,15 @@ impl Sub for BigUInt {
     type Output = BigUInt;
     // if self < rhs, result is undefined
     fn sub(self, rhs: BigUInt) -> Self::Output {
-        let limbs_len = if self.limbs.len() >= rhs.limbs.len() {
-            self.limbs.len()
+        let add_len = if self.limbs.len() >= rhs.limbs.len() {
+            0
         } else {
-            rhs.limbs.len()
+            rhs.limbs.len() - rhs.limbs.len()
         };
 
-        let mut limbs = vec![0 as i64; limbs_len];
-        for i in 0..self.limbs.len() {
-            limbs[i] = self.limbs[i];
-        }
+        let mut limbs: Vec<i64> = vec![];
+        limbs.copy_from_slice(&self.limbs[..]);
+        limbs.resize_with(add_len, Default::default);
 
         let mut carry: i64 = 0;
         for i in 0..rhs.limbs.len() {
@@ -116,6 +119,25 @@ impl SubAssign for BigUInt {
             }
         }
         assert_eq!(carry, 0);
+    }
+}
+
+use std::ops::Mul;
+impl Mul for BigUInt {
+    type Output = BigUInt;
+    // if self < rhs, result is undefined
+    fn mul(self, rhs: BigUInt) -> Self::Output {
+        let max_len = if self.limbs.len() > rhs.limbs.len() {
+            self.limbs.len()
+        } else {
+            rhs.limbs.len()
+        };
+
+        let c = convolve(self.limbs, rhs.limbs, max_len);
+
+        BigUInt {
+            limbs: normalize(c),
+        }
     }
 }
 
@@ -171,4 +193,18 @@ impl BigUInt {
     }
 }
 
-fn main() {}
+fn normalize(limbs: Vec<i64>) -> Vec<i64> {
+    let mut carry = 0;
+    let mut normalized_limbs = vec![0 as i64; limbs.len()];
+
+    for i in 0..limbs.len() {
+        normalized_limbs[i] = limbs[i] + carry;
+        carry = 0;
+        if normalized_limbs[i] >= BASE {
+            carry = normalized_limbs[i] >> BASE_E;
+            normalized_limbs[i] &= BASE_MASK;
+        }
+    }
+
+    normalized_limbs
+}

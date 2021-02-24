@@ -1,0 +1,3 @@
+use multiprec;
+
+fn main() {}

@@ -1,7 +1,7 @@
 use num::complex::Complex;
 use std::f64::consts::PI;
 
-fn fftr(f: &mut Vec<Complex<f64>>, k: usize) {
+pub fn fftr(f: &mut Vec<Complex<f64>>, k: usize) {
     if k == 0 {
         return;
     }
@@ -36,7 +36,7 @@ fn fftr(f: &mut Vec<Complex<f64>>, k: usize) {
 }
 
 // aをfftr, bをfftrして
-fn convolve(a: Vec<i64>, b: Vec<i64>, n: usize) -> Vec<i64> {
+pub fn convolve(a: Vec<i64>, b: Vec<i64>, n: usize) -> Vec<i64> {
     let mut l = 0;
     let mut k = 1;
     while k < n {
@@ -72,15 +72,4 @@ fn convolve(a: Vec<i64>, b: Vec<i64>, n: usize) -> Vec<i64> {
     }
 
     retcf
-}
-
-fn main() {
-    let a = vec![3 as i64, -5, 7];
-    let b = vec![-4 as i64, 6, -8];
-
-    let c = convolve(a, b, 3);
-
-    for i in c {
-        println!("{}", i);
-    }
 }

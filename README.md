@@ -22,15 +22,22 @@
 │   ├── bsm_recursive.cpp
 │   └── moyashi.cpp
 └── rust
-    ├── Cargo.lock
-    ├── Cargo.toml
-    ├── test.md(threadとかのテスト結果)
-    ├── src
-        ├── fft.rs
-        ├── main.rs
-        ├── ramanujan.rs
-        ├── thread.rs
-        └── thread-opt.rs
+    └── pi
+        ├── Cargo.lock
+        ├── Cargo.toml
+		├── test.md(threadとかのテスト結果)
+        ├── src
+        │   ├── bigint.rs
+        │   ├── bsm.rs
+        │   ├── lib.rs
+        │   ├── main.rs
+        │   ├── multiprec
+        │   │   ├── biguint.rs
+        │   │   ├── fft.rs
+        │   │   └── mod.rs
+        │   ├── ramanujan.rs
+        │   ├── thread-opt.rs
+        │   └── thread.rs
 ```
 
 ### 進捗
@@ -62,6 +69,10 @@
 
 - Rust で FFT 実装
 
+#### 2021/02/25
+
+- BigUInt型の策定, multiprecモジュール作成
+
 ### コンパイル
 
 #### C++
@@ -75,5 +86,5 @@ make bsm_divide
 #### Rust
 
 ```
-cargo build --bin (main|thread(-opt)?|ramanujan|fft) --release
+cargo build --bin (main|thread(-opt)?|ramanujan|bsm) --release
 ```
