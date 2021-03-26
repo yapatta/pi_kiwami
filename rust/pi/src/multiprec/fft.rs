@@ -47,13 +47,13 @@ pub fn convolve(a: Vec<i64>, b: Vec<i64>, n: usize) -> Vec<i64> {
     l += 1;
 
     let mut af = vec![Complex::new(0 as f64, 0 as f64); k];
-    for i in 0..n {
+    for i in 0..a.len() {
         af[i] = Complex::new(a[i] as f64, 0 as f64);
     }
     fftr(&mut af, l);
 
     let mut bf = vec![Complex::new(0 as f64, 0 as f64); k];
-    for i in 0..n {
+    for i in 0..b.len() {
         bf[i] = Complex::new(b[i] as f64, 0 as f64);
     }
     fftr(&mut bf, l);
@@ -68,7 +68,8 @@ pub fn convolve(a: Vec<i64>, b: Vec<i64>, n: usize) -> Vec<i64> {
 
     let mut retcf: Vec<i64> = Vec::new();
     for i in 0..cf.len() {
-        retcf.push(cf[i].re.round() as i64 / k as i64);
+        let cfk = cf[i].re / k as f64;
+        retcf.push(cfk.round() as i64);
     }
 
     retcf
@@ -107,6 +108,7 @@ pub fn convolve_mut(a: &mut Vec<i64>, b: Vec<i64>, n: usize) {
 
     a.resize_with(cf.len(), || -> i64 { 0 });
     for i in 0..cf.len() {
-        a[i] = cf[i].re.round() as i64 / k as i64
+        let cfk = cf[i].re / k as f64;
+        a[i] = cfk.round() as i64;
     }
 }

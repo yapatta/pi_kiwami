@@ -9,19 +9,30 @@ pub struct BigUInt {
     pub limbs: Vec<i64>,
 }
 
+impl Clone for BigUInt {
+    fn clone(&self) -> BigUInt {
+        let mut limbs = vec![0; self.limbs.len()];
+        for i in 0..self.limbs.len() {
+            limbs[i] = self.limbs[i];
+        }
+        BigUInt { limbs: limbs }
+    }
+}
+
 use std::ops::Add;
 impl Add for BigUInt {
     type Output = BigUInt;
     fn add(self, rhs: BigUInt) -> Self::Output {
-        let add_len = if self.limbs.len() >= rhs.limbs.len() {
-            0
+        let max_len = if self.limbs.len() >= rhs.limbs.len() {
+            self.limbs.len()
         } else {
-            rhs.limbs.len() - rhs.limbs.len()
+            rhs.limbs.len()
         };
 
-        let mut limbs: Vec<i64> = vec![];
-        limbs.copy_from_slice(&self.limbs[..]);
-        limbs.resize_with(add_len, Default::default);
+        let mut limbs: Vec<i64> = vec![0; max_len];
+        for i in 0..self.limbs.len() {
+            limbs[i] = self.limbs[i];
+        }
 
         let mut carry: i64 = 0;
         for i in 0..rhs.limbs.len() {
@@ -68,19 +79,20 @@ impl Sub for BigUInt {
     type Output = BigUInt;
     // if self < rhs, result is undefined
     fn sub(self, rhs: BigUInt) -> Self::Output {
-        let add_len = if self.limbs.len() >= rhs.limbs.len() {
-            0
+        let max_len = if self.limbs.len() >= rhs.limbs.len() {
+            self.limbs.len()
         } else {
-            rhs.limbs.len() - rhs.limbs.len()
+            rhs.limbs.len()
         };
 
-        let mut limbs: Vec<i64> = vec![];
-        limbs.copy_from_slice(&self.limbs[..]);
-        limbs.resize_with(add_len, Default::default);
+        let mut limbs: Vec<i64> = vec![0; max_len];
+        for i in 0..self.limbs.len() {
+            limbs[i] = self.limbs[i];
+        }
 
         let mut carry: i64 = 0;
         for i in 0..rhs.limbs.len() {
-            limbs[i] -= rhs.limbs[i] - carry;
+            limbs[i] -= rhs.limbs[i] + carry;
             carry = 0;
             if limbs[i] < 0 {
                 carry = 1;
@@ -100,6 +112,24 @@ impl Sub for BigUInt {
         assert_eq!(carry, 0);
 
         BigUInt { limbs: limbs }
+    }
+}
+
+use std::ops::SubAssign;
+impl SubAssign for BigUInt {
+    fn sub_assign(&mut self, rhs: Self) {
+        assert_eq!(*self >= rhs, true);
+
+        let mut carry: i64 = 0;
+        for i in 0..rhs.limbs.len() {
+            self.limbs[i] -= rhs.limbs[i] - carry;
+            carry = 0;
+            if self.limbs[i] < 0 {
+                carry = 1;
+                self.limbs[i] += BASE;
+            }
+        }
+        assert_eq!(carry, 0);
     }
 }
 
@@ -154,21 +184,45 @@ impl PartialOrd for BigUInt {
 
 use std::cmp::Ordering;
 impl Ord for BigUInt {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.limbs.len() > other.limbs.len() {
-            return Ordering::Greater;
-        } else if self.limbs.len() < other.limbs.len() {
-            return Ordering::Less;
+    fn cmp(&self, rhs: &Self) -> Ordering {
+        let mut flag = false;
+        let max_len = if self.limbs.len() >= rhs.limbs.len() {
+            self.limbs.len()
         } else {
-            for i in (0..self.limbs.len()).rev() {
-                if self.limbs[i] > self.limbs[i] {
-                    return Ordering::Greater;
-                } else if self.limbs[i] < self.limbs[i] {
-                    return Ordering::Less;
-                }
+            rhs.limbs.len()
+        };
+
+        let mut limbs: Vec<i64> = vec![0; max_len];
+        for i in 0..self.limbs.len() {
+            limbs[i] = self.limbs[i];
+        }
+
+        let mut carry: i64 = 0;
+        for i in 0..rhs.limbs.len() {
+            limbs[i] -= rhs.limbs[i] + carry;
+            carry = 0;
+            if limbs[i] < 0 {
+                carry = 1;
+                limbs[i] += BASE;
             }
+            if limbs[i] != 0 {
+                flag = true;
+            }
+        }
+
+        if carry == 0 && !flag {
             return Ordering::Equal;
         }
+        if carry == 1 {
+            if limbs.len() > rhs.limbs.len() {
+                limbs[rhs.limbs.len()] -= carry;
+                carry = 0;
+            } else {
+                return Ordering::Less;
+            }
+        }
+
+        Ordering::Greater
     }
 }
 
@@ -249,4 +303,25 @@ fn normalize_mut(limbs: &mut Vec<i64>) {
     if limbs.len() > msl * 3 {
         limbs.resize_with(msl + 2, Default::default);
     }
+}
+
+pub fn get_number(c: &BigUInt) -> i64 {
+    let mut sum = 0;
+    for i in (0..c.limbs.len()).rev() {
+        sum = sum * BASE + c.limbs[i];
+    }
+    sum
+}
+
+// TODO: あとでやる
+pub fn get_str(c: &BigUInt) -> String {
+    let mut ret = "".to_string();
+    let mut tmp_sum = 0;
+    for i in (0..c.limbs.len()).rev() {
+        tmp_sum = tmp_sum * BASE + c.limbs[i];
+        let tmp = (tmp_sum / 1000).to_string();
+        tmp_sum %= 1000;
+        ret = tmp + &ret;
+    }
+    ret
 }
