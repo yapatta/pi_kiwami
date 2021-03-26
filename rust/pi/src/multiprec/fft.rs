@@ -73,3 +73,40 @@ pub fn convolve(a: Vec<i64>, b: Vec<i64>, n: usize) -> Vec<i64> {
 
     retcf
 }
+
+// aをfftr, bをfftrして
+pub fn convolve_mut(a: &mut Vec<i64>, b: Vec<i64>, n: usize) {
+    let mut l = 0;
+    let mut k = 1;
+    while k < n {
+        k <<= 1;
+        l += 1;
+    }
+    k <<= 1;
+    l += 1;
+
+    let mut af = vec![Complex::new(0 as f64, 0 as f64); k];
+    for i in 0..n {
+        af[i] = Complex::new(a[i] as f64, 0 as f64);
+    }
+    fftr(&mut af, l);
+
+    let mut bf = vec![Complex::new(0 as f64, 0 as f64); k];
+    for i in 0..n {
+        bf[i] = Complex::new(b[i] as f64, 0 as f64);
+    }
+    fftr(&mut bf, l);
+
+    let mut cf = vec![Complex::new(0 as f64, 0 as f64); k];
+    for i in 0..k {
+        cf[i] = af[i] * bf[i];
+        cf[i] = Complex::conj(&cf[i]);
+    }
+
+    fftr(&mut cf, l);
+
+    a.resize_with(cf.len(), || -> i64 { 0 });
+    for i in 0..cf.len() {
+        a[i] = cf[i].re.round() as i64 / k as i64
+    }
+}

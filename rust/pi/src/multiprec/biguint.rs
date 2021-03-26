@@ -1,5 +1,4 @@
-use super::fft::convolve;
-use std::cmp::max;
+use super::fft::{convolve, convolve_mut};
 
 const BASE_E: usize = 13;
 const BASE: i64 = (1 as i64) << BASE_E;
@@ -104,24 +103,6 @@ impl Sub for BigUInt {
     }
 }
 
-use std::ops::SubAssign;
-impl SubAssign for BigUInt {
-    fn sub_assign(&mut self, rhs: Self) {
-        assert_eq!(*self >= rhs, true);
-
-        let mut carry: i64 = 0;
-        for i in 0..rhs.limbs.len() {
-            self.limbs[i] -= rhs.limbs[i] - carry;
-            carry = 0;
-            if self.limbs[i] < 0 {
-                carry = 1;
-                self.limbs[i] += BASE;
-            }
-        }
-        assert_eq!(carry, 0);
-    }
-}
-
 use std::ops::Mul;
 impl Mul for BigUInt {
     type Output = BigUInt;
@@ -138,6 +119,22 @@ impl Mul for BigUInt {
         BigUInt {
             limbs: normalize(c),
         }
+    }
+}
+
+use std::ops::MulAssign;
+impl MulAssign for BigUInt {
+    fn mul_assign(&mut self, rhs: Self) {
+        assert_eq!(self.limbs.len(), rhs.limbs.len());
+        let max_len = if self.limbs.len() > rhs.limbs.len() {
+            self.limbs.len()
+        } else {
+            rhs.limbs.len()
+        };
+        self.limbs.resize_with(max_len, Default::default);
+
+        convolve_mut(&mut self.limbs, rhs.limbs, max_len);
+        normalize_mut(&mut self.limbs);
     }
 }
 
@@ -195,6 +192,7 @@ impl BigUInt {
 
 fn normalize(limbs: Vec<i64>) -> Vec<i64> {
     let mut carry = 0;
+    let mut msl = 0;
     let mut normalized_limbs = vec![0 as i64; limbs.len()];
 
     for i in 0..limbs.len() {
@@ -204,7 +202,51 @@ fn normalize(limbs: Vec<i64>) -> Vec<i64> {
             carry = normalized_limbs[i] >> BASE_E;
             normalized_limbs[i] &= BASE_MASK;
         }
+        if normalized_limbs[i] != 0 {
+            msl = i;
+        }
+    }
+    while carry > 0 {
+        let cur = carry & BASE_MASK;
+        normalized_limbs.push(cur);
+        carry >>= BASE_E;
+        if cur != 0 {
+            msl = normalized_limbs.len() - 1;
+        }
+    }
+
+    if normalized_limbs.len() > msl * 3 {
+        normalized_limbs.resize_with(msl + 2, Default::default);
     }
 
     normalized_limbs
+}
+
+fn normalize_mut(limbs: &mut Vec<i64>) {
+    let mut carry = 0;
+    let mut msl = 0;
+
+    for i in 0..limbs.len() {
+        limbs[i] = limbs[i] + carry;
+        carry = 0;
+        if limbs[i] >= BASE {
+            carry = limbs[i] >> BASE_E;
+            limbs[i] &= BASE_MASK;
+        }
+        if limbs[i] != 0 {
+            msl = i;
+        }
+    }
+    while carry > 0 {
+        let cur = carry & BASE_MASK;
+        limbs.push(cur);
+        carry >>= BASE_E;
+        if cur != 0 {
+            msl = limbs.len() - 1;
+        }
+    }
+
+    if limbs.len() > msl * 3 {
+        limbs.resize_with(msl + 2, Default::default);
+    }
 }
