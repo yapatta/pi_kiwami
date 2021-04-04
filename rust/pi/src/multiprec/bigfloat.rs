@@ -38,6 +38,14 @@ impl BigFloat {
         }
     }
 
+    pub fn fromBigUInt(n: BigUInt) -> BigFloat {
+        BigFloat {
+            sign: false,
+            exponent: 0,
+            fraction: n,
+        }
+    }
+
     fn changeExponent(&self, nexponent: i64) -> Self {
         let diff = self.exponent - nexponent;
         let mut ret = vec![0; diff as usize];
@@ -104,8 +112,7 @@ const RECIP_NUM: usize = 5;
 pub fn reciprocal(a: BigFloat, prec: i64, init: BigFloat) -> BigFloat {
     let mut ans = init.clone();
 
-    // 最初のansがmoveされた, ansが消えた,
-    for i in 0..RECIP_NUM {
+    for _i in 0..RECIP_NUM {
         let one = BigFloat {
             sign: false,
             exponent: 0 as i64,

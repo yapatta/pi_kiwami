@@ -1,8 +1,8 @@
 use super::fft::{convolve, convolve_mut};
 
-const BASE_E: usize = 13;
-const BASE: i64 = (1 as i64) << BASE_E;
-const BASE_MASK: i64 = BASE - 1;
+pub const BASE_E: usize = 13;
+pub const BASE: i64 = (1 as i64) << BASE_E;
+pub const BASE_MASK: i64 = BASE - 1;
 
 #[derive(Debug)]
 pub struct BigUInt {
