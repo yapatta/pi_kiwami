@@ -22,32 +22,10 @@ impl Clone for BigUInt {
 use std::ops::Add;
 impl Add for BigUInt {
     type Output = BigUInt;
-    fn add(self, rhs: BigUInt) -> Self::Output {
-        let max_len = if self.limbs.len() >= rhs.limbs.len() {
-            self.limbs.len()
-        } else {
-            rhs.limbs.len()
-        };
-
-        let mut limbs: Vec<i64> = vec![0; max_len];
-        for i in 0..self.limbs.len() {
-            limbs[i] = self.limbs[i];
-        }
-
-        let mut carry: i64 = 0;
-        for i in 0..rhs.limbs.len() {
-            limbs[i] += rhs.limbs[i] + carry;
-            carry = 0;
-            if limbs[i] >= BASE {
-                carry = limbs[i] >> BASE_E;
-                limbs[i] &= BASE_MASK;
-            }
-        }
-        while carry > 0 {
-            limbs.push(carry & BASE_MASK);
-            carry >>= BASE_E;
-        }
-        return BigUInt { limbs: limbs };
+    #[inline]
+    fn add(mut self, rhs: BigUInt) -> Self {
+        self.add_assign(rhs);
+        self
     }
 }
 
@@ -78,40 +56,9 @@ use std::ops::Sub;
 impl Sub for BigUInt {
     type Output = BigUInt;
     // if self < rhs, result is undefined
-    fn sub(self, rhs: BigUInt) -> Self::Output {
-        let max_len = if self.limbs.len() >= rhs.limbs.len() {
-            self.limbs.len()
-        } else {
-            rhs.limbs.len()
-        };
-
-        let mut limbs: Vec<i64> = vec![0; max_len];
-        for i in 0..self.limbs.len() {
-            limbs[i] = self.limbs[i];
-        }
-
-        let mut carry: i64 = 0;
-        for i in 0..rhs.limbs.len() {
-            limbs[i] -= rhs.limbs[i] + carry;
-            carry = 0;
-            if limbs[i] < 0 {
-                carry = 1;
-                limbs[i] += BASE;
-            }
-        }
-
-        if carry == 1 {
-            if limbs.len() > rhs.limbs.len() {
-                limbs[rhs.limbs.len()] -= carry;
-                carry = 0;
-            } else {
-                panic!("undefined");
-            }
-        }
-
-        assert_eq!(carry, 0);
-
-        BigUInt { limbs: limbs }
+    fn sub(mut self, rhs: BigUInt) -> Self {
+        self.sub_assign(rhs);
+        self
     }
 }
 
@@ -136,26 +83,17 @@ impl SubAssign for BigUInt {
 use std::ops::Mul;
 impl Mul for BigUInt {
     type Output = BigUInt;
-    // if self < rhs, result is undefined
-    fn mul(self, rhs: BigUInt) -> Self::Output {
-        let max_len = if self.limbs.len() > rhs.limbs.len() {
-            self.limbs.len()
-        } else {
-            rhs.limbs.len()
-        };
-
-        let c = convolve(self.limbs, rhs.limbs, max_len);
-
-        BigUInt {
-            limbs: normalize(c),
-        }
+    #[inline]
+    fn mul(mut self, rhs: BigUInt) -> Self {
+        self.mul_assign(rhs);
+        self
     }
 }
 
 use std::ops::MulAssign;
 impl MulAssign for BigUInt {
     fn mul_assign(&mut self, rhs: Self) {
-        assert_eq!(self.limbs.len(), rhs.limbs.len());
+        // assert_eq!(self.limbs.len(), rhs.limbs.len());
         let max_len = if self.limbs.len() > rhs.limbs.len() {
             self.limbs.len()
         } else {
@@ -216,6 +154,13 @@ impl Ord for BigUInt {
         if carry == 1 {
             if limbs.len() > rhs.limbs.len() {
                 limbs[rhs.limbs.len()] -= carry;
+                if limbs[rhs.limbs.len()] < 0 {
+                    if limbs.len() == rhs.limbs.len() + 1 {
+                        return Ordering::Less;
+                    }
+                    limbs[rhs.limbs.len()] += BASE;
+                    limbs[rhs.limbs.len() + 1] -= carry;
+                }
                 carry = 0;
             } else {
                 return Ordering::Less;
@@ -227,7 +172,8 @@ impl Ord for BigUInt {
 }
 
 impl BigUInt {
-    pub fn new(mut a: i64) -> Self {
+    #[inline]
+    pub const fn new(mut a: i64) -> Self {
         let mut al: Vec<i64> = Vec::new();
         if a == 0 {
             al.push(0);
@@ -239,6 +185,7 @@ impl BigUInt {
         BigUInt { limbs: al }
     }
 
+    #[inline]
     pub fn len(self) -> usize {
         self.limbs.len()
     }

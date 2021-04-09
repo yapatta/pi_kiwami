@@ -18,9 +18,9 @@ impl Clone for BigFloat {
 }
 
 use std::ops::Mul;
-impl Mul for BigFloat {
+impl<'i> Mul for &'i BigFloat {
     type Output = BigFloat;
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: &'i BigFloat) -> Self::Output {
         BigFloat {
             sign: self.sign ^ rhs.sign,
             exponent: self.exponent + rhs.exponent,
@@ -30,7 +30,8 @@ impl Mul for BigFloat {
 }
 
 impl BigFloat {
-    pub fn new(sign: bool, exponent: i64, fraction: BigUInt) -> Self {
+    #[inline]
+    pub const fn new(sign: bool, exponent: i64, fraction: BigUInt) -> Self {
         BigFloat {
             sign: sign,
             exponent: exponent,
@@ -64,9 +65,9 @@ impl BigFloat {
 }
 
 use std::ops::Add;
-impl Add for BigFloat {
-    type Output = BigFloat;
-    fn add(self, rhs: Self) -> Self::Output {
+impl<'i> Add for BigFloat {
+    type Output = Self;
+    fn add(self, rhs: BigFloat<'i>) -> Self {
         let min_exponent = if self.exponent < rhs.exponent {
             self.exponent
         } else {
@@ -99,11 +100,11 @@ impl Add for BigFloat {
 }
 
 use std::ops::Sub;
-impl Sub for BigFloat {
+impl<'i> Sub for &'i BigFloat {
     type Output = BigFloat;
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: &'i BigFloat) -> Self::Output {
         let neg_rhs = BigFloat::new(!rhs.sign, rhs.exponent, rhs.fraction);
-        self + neg_rhs
+        self + &neg_rhs
     }
 }
 
