@@ -79,12 +79,12 @@ impl AddAssign for BigFloat {
         rhs.changeExponent(min_exponent);
 
         if self.sign == rhs.sign {
-            self.fraction = self.fraction + rhs.fraction;
+            self.fraction += rhs.fraction;
         } else if self.fraction < rhs.fraction {
             self.sign = rhs.sign;
             self.fraction = rhs.fraction - self.fraction;
         } else {
-            self.fraction = self.fraction - rhs.fraction;
+            self.fraction -= rhs.fraction;
         }
     }
 }
