@@ -2,8 +2,8 @@ use super::biguint::BigUInt;
 
 #[derive(Debug)]
 pub struct BigFloat {
-    pub sign: bool, // (-1) ** sign
-    pub exponent: i64,
+    pub sign: bool,        // (-1) ** sign
+    pub exponent: i64,     // BASE ** exponent
     pub fraction: BigUInt, // 整数
 }
 
@@ -13,18 +13,6 @@ impl Clone for BigFloat {
             sign: self.sign,
             exponent: self.exponent,
             fraction: self.fraction.clone(),
-        }
-    }
-}
-
-use std::ops::Mul;
-impl<'i> Mul for &'i BigFloat {
-    type Output = BigFloat;
-    fn mul(self, rhs: &'i BigFloat) -> Self::Output {
-        BigFloat {
-            sign: self.sign ^ rhs.sign,
-            exponent: self.exponent + rhs.exponent,
-            fraction: self.fraction * rhs.fraction,
         }
     }
 }
@@ -47,64 +35,84 @@ impl BigFloat {
         }
     }
 
-    fn changeExponent(&self, nexponent: i64) -> Self {
+    fn changeExponent(&mut self, nexponent: i64) {
         let diff = self.exponent - nexponent;
-        let mut ret = vec![0; diff as usize];
         if diff > 0 {
-            for l in self.fraction.limbs.iter() {
-                ret.push(*l)
-            }
+            let mut ret = vec![0; diff as usize];
+            ret.append(&mut self.fraction.limbs);
+            self.fraction.limbs = ret;
         } else if diff < 0 {
             // 放置
             assert!(false);
-        } else {
-            return self.clone();
         }
-        BigFloat::new(self.sign, nexponent, BigUInt { limbs: ret })
     }
 }
 
-use std::ops::Add;
-impl<'i> Add for BigFloat {
-    type Output = Self;
-    fn add(self, rhs: BigFloat<'i>) -> Self {
+use std::ops::MulAssign;
+impl MulAssign for BigFloat {
+    fn mul_assign(&mut self, rhs: BigFloat) {
+        self.sign ^= rhs.sign;
+        self.exponent += rhs.exponent;
+        self.fraction *= rhs.fraction;
+    }
+}
+
+use std::ops::Mul;
+impl Mul for BigFloat {
+    type Output = BigFloat;
+    fn mul(mut self, rhs: BigFloat) -> Self {
+        self.mul_assign(rhs);
+        self
+    }
+}
+
+use std::ops::AddAssign;
+impl AddAssign for BigFloat {
+    fn add_assign(&mut self, rhs: BigFloat) {
         let min_exponent = if self.exponent < rhs.exponent {
             self.exponent
         } else {
             rhs.exponent
         };
 
-        let ret_self = self.changeExponent(min_exponent);
-        let ret_rhs = rhs.changeExponent(min_exponent);
+        self.changeExponent(min_exponent);
+        rhs.changeExponent(min_exponent);
 
-        if ret_self.sign == ret_rhs.sign {
-            return BigFloat {
-                sign: ret_self.sign,
-                exponent: min_exponent,
-                fraction: ret_self.fraction + ret_rhs.fraction,
-            };
-        } else if ret_self.fraction < ret_rhs.fraction {
-            return BigFloat {
-                sign: ret_rhs.sign,
-                exponent: min_exponent,
-                fraction: ret_rhs.fraction - ret_self.fraction,
-            };
+        if self.sign == rhs.sign {
+            self.fraction = self.fraction + rhs.fraction;
+        } else if self.fraction < rhs.fraction {
+            self.sign = rhs.sign;
+            self.fraction = rhs.fraction - self.fraction;
         } else {
-            return BigFloat {
-                sign: ret_self.sign,
-                exponent: min_exponent,
-                fraction: ret_self.fraction - ret_rhs.fraction,
-            };
+            self.fraction = self.fraction - rhs.fraction;
         }
     }
 }
 
+use std::ops::Add;
+impl Add for BigFloat {
+    type Output = Self;
+    #[inline]
+    fn add(mut self, rhs: BigFloat) -> Self {
+        self.add_assign(rhs);
+        self
+    }
+}
+
+use std::ops::SubAssign;
+impl SubAssign for BigFloat {
+    fn sub_assign(&mut self, rhs: BigFloat) {
+        rhs.sign = !rhs.sign;
+        *self = *self + rhs;
+    }
+}
+
 use std::ops::Sub;
-impl<'i> Sub for &'i BigFloat {
+impl Sub for BigFloat {
     type Output = BigFloat;
-    fn sub(self, rhs: &'i BigFloat) -> Self::Output {
-        let neg_rhs = BigFloat::new(!rhs.sign, rhs.exponent, rhs.fraction);
-        self + &neg_rhs
+    fn sub(mut self, rhs: BigFloat) -> Self {
+        self.sub_assign(rhs);
+        self
     }
 }
 
